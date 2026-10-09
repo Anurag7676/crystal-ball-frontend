@@ -71,17 +71,19 @@ export function SummaryView() {
         </ol>
       </div>
 
-      <div className="animate-rise [animation-delay:90ms]">
-        <SectionLabel>Recommendations</SectionLabel>
-        <ul className="space-y-1.5">
-          {data.recommendations.map((r) => (
-            <li key={r} className="flex gap-2 text-[12.5px] leading-snug text-fg-muted">
-              <span aria-hidden className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-fg-subtle" />
-              {r}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {data.recommendations.length > 0 && (
+        <div className="animate-rise [animation-delay:90ms]">
+          <SectionLabel>Recommendations</SectionLabel>
+          <ul className="space-y-1.5">
+            {data.recommendations.map((r) => (
+              <li key={r} className="flex gap-2 text-[12.5px] leading-snug text-fg-muted">
+                <span aria-hidden className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-fg-subtle" />
+                {r}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="animate-rise border-l-2 border-warm pl-3 text-[11.5px] leading-relaxed text-fg-muted [animation-delay:120ms]">
         {data.orderingNote}
