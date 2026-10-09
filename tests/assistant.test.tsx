@@ -39,7 +39,8 @@ describe('AssistantPanel', () => {
     renderPanel();
 
     await user.click(within(panel()).getByRole('button', { name: 'Close assistant' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // The panel plays a short exit animation before unmounting.
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
     await user.click(screen.getByRole('button', { name: 'Open assistant' }));
     expect(panel()).toBeInTheDocument();

@@ -49,6 +49,42 @@ describe('ApprovalsDashboard', () => {
     expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
   });
 
+  it('shows the selected item and hands it to the assistant', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchApprovals).mockResolvedValue({ approvals, source: 'fixture' });
+    render(<ApprovalsDashboard />);
+    await screen.findByRole('table', { name: 'Pending approval requests' });
+
+    await user.click(screen.getByRole('button', { name: 'Safety Equipment & Sensor Specs' }));
+    const detail = screen.getByRole('complementary', { name: 'Selected approval' });
+    expect(detail).toHaveTextContent('Sam HelpAdmin');
+    expect(detail).toHaveTextContent('apr-003');
+
+    await user.click(within(detail).getByRole('button', { name: 'Ask the assistant about this item' }));
+
+    expect(vi.mocked(streamAiAction)).toHaveBeenCalledWith(
+      'chat',
+      expect.objectContaining({ message: 'What should I check before approving "Safety Equipment & Sensor Specs"?' }),
+      expect.any(Function),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('toggles and remembers the colour theme', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchApprovals).mockResolvedValue({ approvals, source: 'fixture' });
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    render(<ApprovalsDashboard />);
+
+    await user.click(screen.getByRole('button', { name: 'Toggle dark theme' }));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
+
+    await user.click(screen.getByRole('button', { name: 'Toggle dark theme' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    vi.unstubAllGlobals();
+  });
+
   it('shows a retryable error when approvals cannot be loaded', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchApprovals)

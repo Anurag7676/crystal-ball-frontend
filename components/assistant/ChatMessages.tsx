@@ -14,16 +14,16 @@ export function ChatMessages({ messages, label, onRetry }: Props) {
 
   // Follow the conversation as tokens arrive.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: 'end' });
+    endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }, [messages.length, lastContent]);
 
   return (
-    <div role="log" aria-label={label} aria-live="polite" className="flex flex-col gap-3">
+    <div role="log" aria-label={label} aria-live="polite" className="flex flex-col gap-4">
       {messages.map((m, i) =>
         m.role === 'user' ? (
           <p
             key={m.id}
-            className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-violet-600 px-3 py-2 text-sm text-white"
+            className="ml-auto max-w-[85%] animate-msg-in whitespace-pre-wrap rounded-2xl rounded-tr-md bg-gradient-to-br from-brand to-brand-hover px-3.5 py-2.5 text-sm leading-relaxed text-brand-fg shadow-raised"
           >
             {m.content}
           </p>

@@ -66,6 +66,8 @@ interface AssistantState {
   sendMessage(action: ConversationAction, text: string): void;
   retryLast(action: ConversationAction): void;
   cancel(action: AiAction): void;
+  /** Opens the panel on a conversation view, optionally sending a first question. */
+  askAbout(action: ConversationAction, message?: string): void;
 }
 
 export const TEACH_STARTER = 'Teach me how to review an approval.';
@@ -243,6 +245,11 @@ export const useAssistantStore = create<AssistantState>()((set, get) => {
     cancel: (action) => {
       controllers.get(action)?.abort();
       controllers.delete(action);
+    },
+
+    askAbout: (action, message) => {
+      set({ isOpen: true, view: action });
+      if (message) void get().sendMessage(action, message);
     },
   };
 });

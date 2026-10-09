@@ -1,4 +1,4 @@
-import { SendHorizontal, Square } from 'lucide-react';
+import { ArrowUp, Square } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, useState } from 'react';
 import { MAX_MESSAGE_LENGTH } from '@/lib/contracts';
 
@@ -12,6 +12,7 @@ interface Props {
 export function ChatInput({ busy, placeholder, onSend, onStop }: Props) {
   const [text, setText] = useState('');
   const canSend = !busy && text.trim().length > 0;
+  const nearLimit = text.length > MAX_MESSAGE_LENGTH * 0.8;
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -25,39 +26,49 @@ export function ChatInput({ busy, placeholder, onSend, onStop }: Props) {
   };
 
   return (
-    <form onSubmit={submit} className="flex items-end gap-2 border-t border-slate-200 bg-white p-3">
-      <label className="flex-1">
-        <span className="sr-only">Message</span>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={busy}
-          rows={1}
-          maxLength={MAX_MESSAGE_LENGTH}
-          placeholder={placeholder}
-          className="max-h-28 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200 disabled:bg-slate-50"
-        />
-      </label>
-      {busy ? (
-        <button
-          type="button"
-          onClick={onStop}
-          aria-label="Stop"
-          className="rounded-lg bg-slate-800 p-2.5 text-white hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-violet-500"
-        >
-          <Square aria-hidden className="h-4 w-4" />
-        </button>
-      ) : (
-        <button
-          type="submit"
-          aria-label="Send"
-          disabled={!canSend}
-          className="rounded-lg bg-violet-600 p-2.5 text-white hover:bg-violet-700 focus-visible:outline-2 focus-visible:outline-violet-500 disabled:opacity-40"
-        >
-          <SendHorizontal aria-hidden className="h-4 w-4" />
-        </button>
-      )}
+    <form onSubmit={submit} className="border-t border-line bg-surface p-3">
+      <div className="flex items-end gap-2 rounded-2xl border border-line bg-surface-2 p-1.5 pl-3 transition focus-within:border-brand focus-within:bg-surface focus-within:ring-4 focus-within:ring-[var(--ring)]">
+        <label className="flex-1">
+          <span className="sr-only">Message</span>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={onKeyDown}
+            disabled={busy}
+            rows={1}
+            maxLength={MAX_MESSAGE_LENGTH}
+            placeholder={placeholder}
+            className="field-sizing-content block max-h-28 min-h-9 w-full resize-none bg-transparent py-2 text-sm text-fg outline-none placeholder:text-fg-subtle disabled:opacity-60"
+          />
+        </label>
+        {busy ? (
+          <button
+            type="button"
+            onClick={onStop}
+            aria-label="Stop"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg text-bg transition hover:opacity-85 active:scale-90"
+          >
+            <Square aria-hidden className="h-3.5 w-3.5 fill-current" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            aria-label="Send"
+            disabled={!canSend}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-fg shadow-raised transition hover:bg-brand-hover active:scale-90 disabled:bg-surface-3 disabled:text-fg-subtle disabled:shadow-none"
+          >
+            <ArrowUp aria-hidden className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      <p className="mt-1.5 flex justify-between px-1 text-[10px] text-fg-subtle">
+        <span>Enter to send · Shift+Enter for a new line</span>
+        {nearLimit && (
+          <span className="tabular-nums">
+            {text.length}/{MAX_MESSAGE_LENGTH}
+          </span>
+        )}
+      </p>
     </form>
   );
 }

@@ -1,52 +1,61 @@
-import { FileText, Folder, Image as ImageIcon, MoreVertical, Video } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import type { Approval } from '@/lib/contracts';
+import { TYPE_META } from './approvalMeta';
+import { StatusBadge } from './StatusBadge';
 
-const TYPE_META: Record<Approval['type'], { label: string; Icon: typeof Folder; tint: string }> = {
-  folder: { label: 'Folder', Icon: Folder, tint: 'bg-amber-50 text-amber-600' },
-  video: { label: 'Video', Icon: Video, tint: 'bg-rose-50 text-rose-600' },
-  pdf: { label: 'PDF', Icon: FileText, tint: 'bg-blue-50 text-blue-600' },
-  image: { label: 'Image', Icon: ImageIcon, tint: 'bg-emerald-50 text-emerald-600' },
-};
+interface Props {
+  approval: Approval;
+  selected: boolean;
+  index: number;
+  onSelect: (id: string) => void;
+}
 
-const STATUS_LABEL: Record<Approval['status'], string> = {
-  pending_review: 'Pending Review',
-  approved: 'Approved',
-  rejected: 'Rejected',
-};
-
-export function ApprovalRow({ approval, highlighted }: { approval: Approval; highlighted?: boolean }) {
+export function ApprovalRow({ approval, selected, index, onSelect }: Props) {
   const { label, Icon, tint } = TYPE_META[approval.type];
 
   return (
     <tr
-      className={`border-b border-slate-100 text-sm last:border-0 ${
-        highlighted ? 'bg-violet-50/70 shadow-[inset_3px_0_0_0_#7c3aed]' : 'hover:bg-slate-50'
+      onClick={() => onSelect(approval.id)}
+      style={{ animationDelay: `${index * 40}ms` }}
+      className={`group animate-rise cursor-pointer border-b border-line text-sm transition-colors last:border-0 ${
+        selected ? 'bg-brand-softer shadow-[inset_3px_0_0_0_var(--brand)]' : 'hover:bg-surface-2'
       }`}
     >
-      <td className="py-3 pl-4 pr-3">
+      <td className="py-3.5 pl-5 pr-3">
         <div className="flex items-center gap-3">
-          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tint}`}>
-            <Icon aria-hidden className="h-4 w-4" />
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tint}`}>
+            <Icon aria-hidden className="h-[18px] w-[18px]" />
           </span>
-          <span className="font-medium text-slate-800">{approval.title}</span>
+          {/* The button gives keyboard and screen-reader users the same "select row" action. */}
+          <button
+            type="button"
+            aria-pressed={selected}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(approval.id);
+            }}
+            className="rounded text-left font-medium text-fg transition-colors group-hover:text-brand"
+          >
+            {approval.title}
+          </button>
         </div>
       </td>
-      <td className="px-3 py-3">
-        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-600">
+      <td className="px-3 py-3.5">
+        <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-0.5 text-xs text-fg-muted">
           <Icon aria-hidden className="h-3 w-3" />
           {label}
         </span>
       </td>
-      <td className="px-3 py-3 text-slate-600">{approval.submittedBy}</td>
-      <td className="px-3 py-3 text-slate-600">{approval.submittedDateLabel}</td>
-      <td className="px-3 py-3">
-        <span className="inline-flex rounded-md bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-600">
-          {STATUS_LABEL[approval.status]}
-        </span>
+      <td className="px-3 py-3.5 text-fg-muted">{approval.submittedBy}</td>
+      <td className="px-3 py-3.5 tabular-nums text-fg-muted">{approval.submittedDateLabel}</td>
+      <td className="px-3 py-3.5">
+        <StatusBadge status={approval.status} />
       </td>
-      <td className="px-3 py-3 text-right text-slate-400">
-        {/* Approve/reject is out of scope for this assignment; the menu is visual only. */}
-        <MoreVertical aria-hidden className="ml-auto h-4 w-4" />
+      <td className="py-3.5 pl-3 pr-5 text-right">
+        <ChevronRight
+          aria-hidden
+          className={`ml-auto h-4 w-4 transition ${selected ? 'text-brand' : 'text-fg-subtle group-hover:translate-x-0.5 group-hover:text-fg-muted'}`}
+        />
       </td>
     </tr>
   );

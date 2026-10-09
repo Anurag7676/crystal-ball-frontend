@@ -1,29 +1,34 @@
-import { ClipboardList, GraduationCap, LifeBuoy, MessagesSquare } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { AssistantView } from '@/store/assistantStore';
+import { HelpIllustration, SummaryIllustration, TalkIllustration, TeachIllustration } from './illustrations';
 
-const ACTIONS: { view: Exclude<AssistantView, 'home'>; label: string; hint: string; Icon: typeof ClipboardList; tint: string }[] = [
-  { view: 'summary', label: 'Present me Summary', hint: 'Prioritised overview of the queue', Icon: ClipboardList, tint: 'from-amber-100 to-amber-200 text-amber-700' },
-  { view: 'chat', label: 'Talk to me', hint: 'Ask anything about these approvals', Icon: MessagesSquare, tint: 'from-violet-100 to-violet-200 text-violet-700' },
-  { view: 'help', label: 'Help me', hint: 'Answers from the approval policy', Icon: LifeBuoy, tint: 'from-sky-100 to-sky-200 text-sky-700' },
-  { view: 'teach', label: 'Teach me', hint: 'Step-by-step review walkthrough', Icon: GraduationCap, tint: 'from-emerald-100 to-emerald-200 text-emerald-700' },
+const ACTIONS: {
+  view: Exclude<AssistantView, 'home'>;
+  label: string;
+  hint: string;
+  Art: ComponentType<{ className?: string }>;
+}[] = [
+  { view: 'summary', label: 'Present me Summary', hint: 'Prioritised overview of the queue', Art: SummaryIllustration },
+  { view: 'chat', label: 'Talk to me', hint: 'Ask anything about these approvals', Art: TalkIllustration },
+  { view: 'help', label: 'Help me', hint: 'Answers from the approval policy', Art: HelpIllustration },
+  { view: 'teach', label: 'Teach me', hint: 'Step-by-step review walkthrough', Art: TeachIllustration },
 ];
 
 export function AssistantActions({ onSelect }: { onSelect: (view: Exclude<AssistantView, 'home'>) => void }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      {ACTIONS.map(({ view, label, hint, Icon, tint }) => (
+      {ACTIONS.map(({ view, label, hint, Art }, i) => (
         <button
           key={view}
           type="button"
           onClick={() => onSelect(view)}
           aria-label={label}
-          className="group flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-violet-500"
+          style={{ animationDelay: `${80 + i * 50}ms` }}
+          className="group flex animate-rise flex-col items-center gap-2 rounded-2xl border border-line bg-surface px-3 pb-4 pt-5 text-center shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-raised active:translate-y-0 active:scale-[0.98]"
         >
-          <span className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${tint}`}>
-            <Icon aria-hidden className="h-8 w-8" />
-          </span>
-          <span className="text-sm font-medium text-slate-800">{label}</span>
-          <span aria-hidden className="text-[11px] leading-tight text-slate-500">
+          <Art className="h-16 w-16 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110" />
+          <span className="mt-1 text-sm font-semibold text-fg">{label}</span>
+          <span aria-hidden className="text-[11px] leading-snug text-fg-muted">
             {hint}
           </span>
         </button>
