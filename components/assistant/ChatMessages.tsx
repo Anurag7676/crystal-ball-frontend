@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/store/assistantStore';
 import { StreamingMessage } from './StreamingMessage';
 
@@ -10,12 +10,14 @@ interface Props {
 
 export function ChatMessages({ messages, label, onRetry }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
-  const lastContent = messages.at(-1)?.content;
-
-  // Follow the conversation as tokens arrive.
-  useEffect(() => {
+  const scrollToEnd = useCallback(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages.length, lastContent]);
+  }, []);
+
+  // Follow the conversation as messages are added; the last reply also scrolls as it is revealed.
+  useEffect(() => {
+    scrollToEnd();
+  }, [messages.length, scrollToEnd]);
 
   return (
     <div role="log" aria-label={label} aria-live="polite" className="flex flex-col gap-5">
@@ -28,7 +30,12 @@ export function ChatMessages({ messages, label, onRetry }: Props) {
             {m.content}
           </p>
         ) : (
-          <StreamingMessage key={m.id} message={m} onRetry={i === messages.length - 1 ? onRetry : undefined} />
+          <StreamingMessage
+            key={m.id}
+            message={m}
+            onRetry={i === messages.length - 1 ? onRetry : undefined}
+            onReveal={i === messages.length - 1 ? scrollToEnd : undefined}
+          />
         ),
       )}
       <div ref={endRef} />

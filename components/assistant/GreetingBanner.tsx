@@ -2,12 +2,15 @@ import { AssistantAvatar } from '@/components/ui/BrandMark';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { SourceBadge } from '@/components/ui/SourceBadge';
 import { Thinking } from '@/components/ui/Thinking';
+import { useSmoothText } from '@/hooks/useSmoothText';
 import { useAssistantStore } from '@/store/assistantStore';
 
 export function GreetingBanner() {
   const greeting = useAssistantStore((s) => s.greeting);
   const replayGreeting = useAssistantStore((s) => s.replayGreeting);
   const busy = greeting.status === 'loading' || greeting.status === 'streaming';
+  const visible = useSmoothText(greeting.text, greeting.status === 'streaming');
+  const revealing = greeting.status === 'streaming' || visible.length < greeting.text.length;
 
   return (
     <div role="status" aria-label="Greeting" aria-busy={busy} className="mb-4">
@@ -21,8 +24,8 @@ export function GreetingBanner() {
               <Thinking />
             ) : (
               <p>
-                {greeting.text}
-                {greeting.status === 'streaming' && (
+                {visible}
+                {revealing && (
                   <span aria-hidden className="ml-0.5 inline-block h-3.5 w-[2px] animate-caret bg-fg align-text-bottom" />
                 )}
               </p>

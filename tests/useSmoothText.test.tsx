@@ -27,19 +27,26 @@ describe('useSmoothText', () => {
     expect(burst.startsWith(result.current)).toBe(true);
   });
 
-  it('keeps up with new deltas and catches up quickly when a backlog builds', () => {
+  it('spreads a large burst evenly and still catches up within a few seconds', () => {
     motionAllowed();
     const { result, rerender } = renderHook(({ text }) => useSmoothText(text, true), { initialProps: { text: 'Hi' } });
     frames(5);
     expect(result.current).toBe('Hi');
 
-    const long = `Hi${' there'.repeat(80)}`;
+    const long = `Hi${' there'.repeat(80)}`; // 482 chars arriving at once
     rerender({ text: long });
-    frames(60); // ~1s
+    let previous = result.current.length;
+    for (let i = 0; i < 10; i++) {
+      frames(3); // ~50ms
+      const step = result.current.length - previous;
+      expect(step).toBeLessThanOrEqual(40); // no visible jump
+      previous = result.current.length;
+    }
+    frames(180); // ~3s more
     expect(result.current).toBe(long);
   });
 
-  it('drains the rest promptly once streaming has finished', () => {
+  it('drains the rest promptly but without a visible jump once streaming has finished', () => {
     motionAllowed();
     const text = 'x'.repeat(300);
     const { result, rerender } = renderHook(({ streaming }) => useSmoothText(text, streaming), {
@@ -49,7 +56,13 @@ describe('useSmoothText', () => {
     expect(result.current.length).toBeLessThan(300);
 
     rerender({ streaming: false });
-    frames(15); // ~250ms
+    let previous = result.current.length;
+    for (let i = 0; i < 6; i++) {
+      frames(3); // ~50ms
+      expect(result.current.length - previous).toBeLessThanOrEqual(50);
+      previous = result.current.length;
+    }
+    frames(60); // ~1s
     expect(result.current).toBe(text);
   });
 

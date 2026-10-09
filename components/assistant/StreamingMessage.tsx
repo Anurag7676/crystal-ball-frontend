@@ -1,12 +1,16 @@
+import { useEffect } from 'react';
 import { AssistantAvatar } from '@/components/ui/BrandMark';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { SourceBadge } from '@/components/ui/SourceBadge';
 import { Thinking } from '@/components/ui/Thinking';
+import { useSmoothText } from '@/hooks/useSmoothText';
 import type { ChatMessage } from '@/store/assistantStore';
 
 interface Props {
   message: ChatMessage;
   onRetry?: () => void;
+  /** Called as more of the reply becomes visible (used to keep the log scrolled). */
+  onReveal?: () => void;
 }
 
 /** Verified citations when the model cited any; otherwise the policy context it was given. */
@@ -27,8 +31,15 @@ function SourcesLine({ message }: { message: ChatMessage }) {
 }
 
 /** One assistant reply: thinking → tokens with a caret → final text, fallback badge, or error. */
-export function StreamingMessage({ message, onRetry }: Props) {
+export function StreamingMessage({ message, onRetry, onReveal }: Props) {
   const streaming = message.status === 'streaming';
+  const visible = useSmoothText(message.content, streaming);
+  const revealing = streaming || visible.length < message.content.length;
+
+  // Let the conversation follow the text as it is revealed, not just as it arrives.
+  useEffect(() => {
+    onReveal?.();
+  }, [visible.length, onReveal]);
 
   return (
     <div className="flex animate-rise gap-2.5">
@@ -37,8 +48,8 @@ export function StreamingMessage({ message, onRetry }: Props) {
         {streaming && !message.content && <Thinking />}
         {message.content && message.status !== 'error' && (
           <div className="whitespace-pre-wrap text-[13px] leading-relaxed text-fg">
-            {message.content}
-            {streaming && (
+            {visible}
+            {revealing && (
               <span aria-hidden className="ml-0.5 inline-block h-3.5 w-[2px] animate-caret bg-fg align-text-bottom" />
             )}
           </div>
