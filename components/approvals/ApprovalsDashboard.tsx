@@ -150,25 +150,9 @@ export function ApprovalsDashboard() {
         </header>
 
         <main className="flex w-full flex-1 flex-col px-4 py-5 sm:px-6">
-          <div className="flex animate-rise flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-[20px] font-semibold tracking-tight">Approvals &amp; Review</h1>
-              <p className="mt-0.5 text-fg-muted">Content submitted by HelpAdmins, waiting for an operator decision.</p>
-            </div>
-            <label className="flex h-8 w-full items-center gap-2 rounded-md border border-line bg-surface px-2.5 shadow-card transition focus-within:border-line-strong focus-within:ring-2 focus-within:ring-[var(--ring)] sm:w-64">
-              <Search aria-hidden className="h-3.5 w-3.5 text-fg-subtle" />
-              <span className="sr-only">Search approvals</span>
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search approvals…"
-                className="w-full bg-transparent text-[13px] outline-none placeholder:text-fg-subtle"
-              />
-            </label>
+          <div className="animate-rise">
+            <h1 className="text-[20px] font-semibold tracking-tight">Approvals &amp; Review</h1>
+            <p className="mt-0.5 text-fg-muted">Content submitted by HelpAdmins, waiting for an operator decision.</p>
           </div>
 
           <div className="mt-5 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -183,6 +167,20 @@ export function ApprovalsDashboard() {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-1.5 px-4 pb-3">
+                <label className="mr-1 flex h-7 w-full items-center gap-1.5 rounded-md border border-line bg-surface px-2 transition focus-within:border-line-strong focus-within:ring-2 focus-within:ring-[var(--ring)] sm:w-56">
+                  <Search aria-hidden className="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+                  <span className="sr-only">Search approvals</span>
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Search approvals…"
+                    className="w-full bg-transparent text-[12.5px] outline-none placeholder:text-fg-subtle"
+                  />
+                </label>
                 <FilterMenu
                   label="Type"
                   options={data?.facets.type ?? []}
