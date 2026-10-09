@@ -191,6 +191,107 @@ describe('AssistantPanel', () => {
     expect(screen.getByRole('log')).not.toHaveTextContent('policy-2');
   });
 
+  describe('Help citations footer', () => {
+    async function askHelp(user: ReturnType<typeof userEvent.setup>, sources: string[]) {
+      await user.click(screen.getByRole('button', { name: 'Help me' }));
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'How do I review safety items?');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+      stream.emit('help', { event: 'meta', data: { action: 'help', requestId: 'r', sources } });
+    }
+
+    it('lists each validated citation once, keeping inline citations in the text', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3', 'policy-2']);
+
+      await stream.finish(
+        'help',
+        delta('Steps [policy-2]. Safety first [policy-3]. Again [policy-2].'),
+        { event: 'done', data: { source: 'ai', citedSources: ['policy-2', 'policy-3', 'policy-2'] } },
+      );
+
+      const log = screen.getByRole('log');
+      expect(log).toHaveTextContent('Steps [policy-2]. Safety first [policy-3]. Again [policy-2].');
+      const footer = within(log).getByText('Sources:', { exact: false });
+      expect(footer).toHaveTextContent(/^Sources: policy-2, policy-3$/);
+    });
+
+    it('shows no footer at all when nothing was cited', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3']);
+
+      await stream.finish('help', delta("The approval policy doesn't cover that."), {
+        event: 'done',
+        data: { source: 'ai', citedSources: [] },
+      });
+
+      expect(screen.getByRole('log')).not.toHaveTextContent(/Sources|Policy context/);
+    });
+
+    it('drops citations that were not part of the grounding context', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3']);
+
+      await stream.finish('help', delta('See [policy-3].'), {
+        event: 'done',
+        data: { source: 'ai', citedSources: ['policy-3', 'policy-9'] },
+      });
+
+      const log = screen.getByRole('log');
+      expect(within(log).getByText('Sources:', { exact: false })).toHaveTextContent(/^Sources: policy-3$/);
+      expect(log).not.toHaveTextContent('policy-9');
+    });
+
+    it('shows no footer while streaming, and none after a cancelled reply', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3']);
+
+      stream.emit('help', delta('Escalate it [policy-3]'));
+      expect(screen.getByRole('log')).not.toHaveTextContent('Sources:');
+
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      await waitFor(() => expect(screen.getByRole('log')).toHaveTextContent(/stopped/i));
+      expect(screen.getByRole('log')).not.toHaveTextContent('Sources:');
+    });
+
+    it('shows the validated citations of a fallback answer next to the offline badge', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3']);
+
+      await stream.finish(
+        'help',
+        { event: 'result', data: { kind: 'text', text: 'Here is the most relevant section: [policy-3] Safety…' } },
+        { event: 'done', data: { source: 'fallback', fallbackReason: 'timeout', citedSources: ['policy-3'] } },
+      );
+
+      const log = screen.getByRole('log');
+      expect(within(log).getByText('Offline answer')).toBeInTheDocument();
+      expect(within(log).getByText('Sources:', { exact: false })).toHaveTextContent(/^Sources: policy-3$/);
+    });
+
+    it('does not carry citations into another conversation', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3']);
+      await stream.finish('help', delta('See [policy-3].'), {
+        event: 'done',
+        data: { source: 'ai', citedSources: ['policy-3'] },
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Back to actions' }));
+      await user.click(screen.getByRole('button', { name: 'Talk to me' }));
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Which first?');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+      await stream.finish('chat', meta('chat'), delta('Start with the safety specs.'), doneAi);
+
+      expect(screen.getByRole('log')).not.toHaveTextContent(/Sources|policy-3/);
+    });
+  });
+
   it('Teach me starts the lesson automatically', async () => {
     const user = userEvent.setup();
     renderPanel();
