@@ -102,13 +102,26 @@ export const ErrorResponseSchema = z.object({
 
 // ---------- Requests ----------
 
-export interface GreetingRequest {
-  sessionId: string;
-  language?: string;
-}
-export type SummaryRequest = GreetingRequest;
-export interface MessageRequest extends GreetingRequest {
-  message: string;
-}
-
 export const MAX_MESSAGE_LENGTH = 1000;
+
+const SessionIdSchema = z.string().regex(/^[A-Za-z0-9_-]{8,64}$/);
+const LanguageSchema = z
+  .string()
+  .max(35)
+  .regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/);
+
+export const GreetingRequestSchema = z
+  .object({ sessionId: SessionIdSchema, language: LanguageSchema.optional() })
+  .strict();
+
+export const MessageRequestSchema = z
+  .object({
+    sessionId: SessionIdSchema,
+    language: LanguageSchema.optional(),
+    message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
+  })
+  .strict();
+
+export type GreetingRequest = z.infer<typeof GreetingRequestSchema>;
+export type SummaryRequest = GreetingRequest;
+export type MessageRequest = z.infer<typeof MessageRequestSchema>;
