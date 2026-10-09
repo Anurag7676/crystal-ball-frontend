@@ -1,35 +1,33 @@
-import type { ComponentType } from 'react';
+import { ClipboardList, GraduationCap, LifeBuoy, MessageSquare } from 'lucide-react';
 import type { AssistantView } from '@/store/assistantStore';
-import { HelpIllustration, SummaryIllustration, TalkIllustration, TeachIllustration } from './illustrations';
 
-const ACTIONS: {
-  view: Exclude<AssistantView, 'home'>;
-  label: string;
-  hint: string;
-  Art: ComponentType<{ className?: string }>;
-}[] = [
-  { view: 'summary', label: 'Present me Summary', hint: 'Prioritised overview of the queue', Art: SummaryIllustration },
-  { view: 'chat', label: 'Talk to me', hint: 'Ask anything about these approvals', Art: TalkIllustration },
-  { view: 'help', label: 'Help me', hint: 'Answers from the approval policy', Art: HelpIllustration },
-  { view: 'teach', label: 'Teach me', hint: 'Step-by-step review walkthrough', Art: TeachIllustration },
+const ACTIONS: { view: Exclude<AssistantView, 'home'>; label: string; hint: string; Icon: typeof ClipboardList }[] = [
+  { view: 'summary', label: 'Present me Summary', hint: 'Prioritised overview of the queue', Icon: ClipboardList },
+  { view: 'chat', label: 'Talk to me', hint: 'Ask anything about these approvals', Icon: MessageSquare },
+  { view: 'help', label: 'Help me', hint: 'Answers from the approval policy', Icon: LifeBuoy },
+  { view: 'teach', label: 'Teach me', hint: 'Step-by-step review walkthrough', Icon: GraduationCap },
 ];
 
 export function AssistantActions({ onSelect }: { onSelect: (view: Exclude<AssistantView, 'home'>) => void }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {ACTIONS.map(({ view, label, hint, Art }, i) => (
+    <div className="grid grid-cols-2 gap-2">
+      {ACTIONS.map(({ view, label, hint, Icon }, i) => (
         <button
           key={view}
           type="button"
           onClick={() => onSelect(view)}
           aria-label={label}
-          style={{ animationDelay: `${80 + i * 50}ms` }}
-          className="group flex animate-rise flex-col items-center gap-2 rounded-2xl border border-line bg-surface px-3 pb-4 pt-5 text-center shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-raised active:translate-y-0 active:scale-[0.98]"
+          style={{ animationDelay: `${40 + i * 30}ms` }}
+          className="group flex animate-rise flex-col items-start gap-2.5 rounded-lg border border-line bg-surface p-3 text-left shadow-card transition-[border-color,background-color,box-shadow] hover:border-line-strong hover:shadow-raised"
         >
-          <Art className="h-16 w-16 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110" />
-          <span className="mt-1 text-sm font-semibold text-fg">{label}</span>
-          <span aria-hidden className="text-[11px] leading-snug text-fg-muted">
-            {hint}
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface-2 text-fg-muted transition-colors group-hover:border-brand/30 group-hover:bg-brand-soft group-hover:text-brand">
+            <Icon aria-hidden className="h-3.5 w-3.5" />
+          </span>
+          <span>
+            <span className="block text-[12.5px] font-medium text-fg">{label}</span>
+            <span aria-hidden className="mt-0.5 block text-[11px] leading-snug text-fg-subtle">
+              {hint}
+            </span>
           </span>
         </button>
       ))}

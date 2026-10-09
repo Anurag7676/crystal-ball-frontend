@@ -1,4 +1,3 @@
-import { CloudOff } from 'lucide-react';
 import type { FallbackReason } from '@/lib/contracts';
 
 const REASONS: Record<FallbackReason, string> = {
@@ -14,9 +13,9 @@ export function SourceBadge({ source, reason }: { source?: 'ai' | 'fallback'; re
   return (
     <span
       title={reason ? REASONS[reason] : 'Standard answer (AI unavailable)'}
-      className="inline-flex items-center gap-1 rounded-full bg-warm-soft px-2 py-0.5 text-[11px] font-medium text-warn-fg"
+      className="inline-flex h-[18px] items-center gap-1 rounded border border-line bg-surface px-1.5 text-[10.5px] font-medium text-fg-muted"
     >
-      <CloudOff aria-hidden className="h-3 w-3" />
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warm" />
       Offline answer
     </span>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, Home, Sparkles, X } from 'lucide-react';
+import { ChevronLeft, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { type ConversationAction, TEACH_STARTER, useAssistantStore } from '@/store/assistantStore';
 import { AssistantActions } from './AssistantActions';
@@ -11,7 +11,7 @@ import { GreetingBanner } from './GreetingBanner';
 import { SummaryView } from './SummaryView';
 
 const VIEW_TITLES = { summary: 'Summary', chat: 'Talk to me', help: 'Help me', teach: 'Teach me' } as const;
-const CLOSE_ANIMATION_MS = 160;
+const CLOSE_ANIMATION_MS = 140;
 
 const CONVERSATION_COPY: Record<ConversationAction, { placeholder: string; starters: string[]; empty: string }> = {
   chat: {
@@ -22,7 +22,7 @@ const CONVERSATION_COPY: Record<ConversationAction, { placeholder: string; start
   help: {
     placeholder: 'Ask an approval-policy question…',
     starters: ['What should I check before approving a video?', 'Can I review an item I submitted myself?'],
-    empty: 'Answers come only from the approval policy document, with section references.',
+    empty: 'Answers come only from the approval policy, with section references.',
   },
   teach: {
     placeholder: 'Ask a follow-up, e.g. “Explain step two again”',
@@ -49,23 +49,20 @@ function ConversationView({ action }: { action: ConversationAction }) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         {thread.messages.length === 0 && copy.empty && (
-          <div className="mb-4 flex animate-rise gap-2 rounded-xl bg-brand-softer px-3 py-2.5 text-sm text-fg-muted">
-            <Sparkles aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-            {copy.empty}
-          </div>
+          <p className="mb-4 animate-rise text-[12.5px] text-fg-muted">{copy.empty}</p>
         )}
         <ChatMessages messages={thread.messages} label={`${VIEW_TITLES[action]} conversation`} onRetry={() => retryLast(action)} />
         {!busy && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-col items-start gap-1.5">
             {copy.starters.map((s, i) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => sendMessage(action, s)}
-                style={{ animationDelay: `${i * 60}ms` }}
-                className="animate-rise rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-fg-muted shadow-card transition hover:border-brand/40 hover:bg-brand-softer hover:text-brand active:scale-95"
+                style={{ animationDelay: `${i * 40}ms` }}
+                className="animate-rise rounded-md border border-line bg-surface px-2.5 py-1 text-left text-[12px] text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
               >
                 {s}
               </button>
@@ -121,26 +118,24 @@ export function AssistantPanel({ pendingCount }: { pendingCount: number }) {
         <div
           role="dialog"
           aria-label="Approvals assistant"
-          className={`fixed inset-x-2 bottom-20 z-40 flex origin-bottom-right flex-col overflow-hidden rounded-3xl border border-line bg-bg shadow-float transition-[width,top,height] duration-300 sm:inset-x-auto sm:right-6 ${
+          className={`fixed inset-x-2 bottom-[72px] z-40 flex origin-bottom-right flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-float sm:inset-x-auto sm:right-5 ${
             closing ? 'animate-panel-out' : 'animate-panel-in'
-          } ${isExpanded ? 'top-20 sm:w-[560px]' : 'max-h-[calc(100vh-7rem)] sm:h-[640px] sm:w-[400px]'}`}
+          } ${isExpanded ? 'top-16 sm:w-[520px]' : 'max-h-[calc(100vh-6rem)] sm:h-[600px] sm:w-[380px]'}`}
         >
           <AssistantHeader expanded={isExpanded} onToggleExpanded={toggleExpanded} onClose={requestClose} />
 
-          <div className="flex items-center justify-between border-b border-line bg-surface px-4 py-2 text-sm">
+          <div className="flex h-9 items-center justify-between border-b border-line px-3 text-[12px]">
             {view === 'home' ? (
-              <span className="inline-flex items-center gap-2 font-medium text-fg">
-                <Home aria-hidden className="h-4 w-4 text-fg-subtle" /> Approvals
-              </span>
+              <span className="px-1 font-medium text-fg">Approvals</span>
             ) : (
               <button
                 type="button"
                 onClick={() => setView('home')}
                 aria-label="Back to actions"
-                className="group -ml-1.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-fg-muted transition hover:bg-surface-2 hover:text-fg"
+                className="-ml-0.5 inline-flex h-6 items-center gap-0.5 rounded-md pl-0.5 pr-1.5 text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
               >
-                <ChevronLeft aria-hidden className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                Approvals <span className="text-fg-subtle">/</span>
+                <ChevronLeft aria-hidden className="h-3.5 w-3.5" />
+                Approvals <span className="px-1 text-fg-subtle">/</span>
                 <span className="font-medium text-fg">{VIEW_TITLES[view]}</span>
               </button>
             )}
@@ -150,13 +145,14 @@ export function AssistantPanel({ pendingCount }: { pendingCount: number }) {
                 setView('home');
                 replayGreeting();
               }}
-              className="rounded-lg px-2 py-1 text-xs font-semibold text-warm transition hover:bg-warm-soft active:scale-95"
+              className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 font-medium text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
             >
+              <RotateCcw aria-hidden className="h-3 w-3" />
               Replay Greeting
             </button>
           </div>
 
-          <div key={view} className="flex min-h-0 flex-1 animate-view-in flex-col">
+          <div key={view} className="flex min-h-0 flex-1 animate-view-in flex-col bg-bg/40">
             {view === 'home' && (
               <div className="flex-1 overflow-y-auto p-4">
                 <GreetingBanner />
@@ -171,11 +167,8 @@ export function AssistantPanel({ pendingCount }: { pendingCount: number }) {
             {(view === 'chat' || view === 'help' || view === 'teach') && <ConversationView action={view} />}
           </div>
 
-          <div className="flex items-center justify-between border-t border-line bg-surface px-4 py-2 text-[11px] text-fg-subtle">
-            <span className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warm" />
-              {pendingCount} pending items
-            </span>
+          <div className="flex h-8 items-center justify-between border-t border-line px-3 text-[11px] text-fg-subtle">
+            <span className="tabular-nums">{pendingCount} pending items</span>
             <span>Suggestions only — verify before acting</span>
           </div>
         </div>
@@ -185,17 +178,16 @@ export function AssistantPanel({ pendingCount }: { pendingCount: number }) {
         type="button"
         onClick={visible ? requestClose : open}
         aria-label={visible ? 'Close assistant' : 'Open assistant'}
-        className="group fixed bottom-4 right-6 z-50 flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-br from-[#8b7bff] to-[#4a37e6] text-white shadow-float transition hover:scale-105 active:scale-95"
+        className="fixed bottom-4 right-5 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-fg text-bg shadow-float transition-transform hover:scale-105 active:scale-95"
       >
-        {!visible && <span aria-hidden className="absolute inset-0 animate-ping-soft rounded-full bg-brand" />}
-        <span className="relative grid place-items-center">
+        <span className="grid place-items-center">
           <X
             aria-hidden
-            className={`col-start-1 row-start-1 h-5 w-5 transition duration-300 ${visible ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`}
+            className={`col-start-1 row-start-1 h-4 w-4 transition duration-200 ${visible ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`}
           />
           <Sparkles
             aria-hidden
-            className={`col-start-1 row-start-1 h-6 w-6 transition duration-300 ${visible ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`}
+            className={`col-start-1 row-start-1 h-4 w-4 transition duration-200 ${visible ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`}
           />
         </span>
       </button>

@@ -26,9 +26,9 @@ export function ChatInput({ busy, placeholder, onSend, onStop }: Props) {
   };
 
   return (
-    <form onSubmit={submit} className="border-t border-line bg-surface p-3">
-      <div className="flex items-end gap-2 rounded-2xl border border-line bg-surface-2 p-1.5 pl-3 transition focus-within:border-brand focus-within:bg-surface focus-within:ring-4 focus-within:ring-[var(--ring)]">
-        <label className="flex-1">
+    <form onSubmit={submit} className="p-3 pt-0">
+      <div className="rounded-lg border border-line bg-surface shadow-card transition focus-within:border-line-strong focus-within:ring-2 focus-within:ring-[var(--ring)]">
+        <label className="block">
           <span className="sr-only">Message</span>
           <textarea
             value={text}
@@ -38,37 +38,42 @@ export function ChatInput({ busy, placeholder, onSend, onStop }: Props) {
             rows={1}
             maxLength={MAX_MESSAGE_LENGTH}
             placeholder={placeholder}
-            className="field-sizing-content block max-h-28 min-h-9 w-full resize-none bg-transparent py-2 text-sm text-fg outline-none placeholder:text-fg-subtle disabled:opacity-60"
+            className="field-sizing-content block max-h-28 min-h-9 w-full resize-none bg-transparent px-3 pt-2.5 text-[13px] text-fg outline-none placeholder:text-fg-subtle disabled:opacity-60"
           />
         </label>
-        {busy ? (
-          <button
-            type="button"
-            onClick={onStop}
-            aria-label="Stop"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg text-bg transition hover:opacity-85 active:scale-90"
-          >
-            <Square aria-hidden className="h-3.5 w-3.5 fill-current" />
-          </button>
-        ) : (
-          <button
-            type="submit"
-            aria-label="Send"
-            disabled={!canSend}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-fg shadow-raised transition hover:bg-brand-hover active:scale-90 disabled:bg-surface-3 disabled:text-fg-subtle disabled:shadow-none"
-          >
-            <ArrowUp aria-hidden className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-      <p className="mt-1.5 flex justify-between px-1 text-[10px] text-fg-subtle">
-        <span>Enter to send · Shift+Enter for a new line</span>
-        {nearLimit && (
-          <span className="tabular-nums">
-            {text.length}/{MAX_MESSAGE_LENGTH}
+        <div className="flex items-center justify-between px-2 pb-2">
+          <span className="flex items-center gap-1 pl-1 text-[10.5px] text-fg-subtle">
+            {nearLimit ? (
+              <span className="tabular-nums">
+                {text.length}/{MAX_MESSAGE_LENGTH}
+              </span>
+            ) : (
+              <>
+                <span className="kbd">↵</span> send <span className="kbd ml-1">⇧↵</span> new line
+              </>
+            )}
           </span>
-        )}
-      </p>
+          {busy ? (
+            <button
+              type="button"
+              onClick={onStop}
+              aria-label="Stop"
+              className="flex h-6 w-6 items-center justify-center rounded-md bg-fg text-bg transition-opacity hover:opacity-80"
+            >
+              <Square aria-hidden className="h-2.5 w-2.5 fill-current" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={!canSend}
+              className="flex h-6 w-6 items-center justify-center rounded-md bg-fg text-bg transition-opacity hover:opacity-80 disabled:bg-surface-3 disabled:text-fg-subtle"
+            >
+              <ArrowUp aria-hidden className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
     </form>
   );
 }

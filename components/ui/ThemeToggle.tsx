@@ -41,10 +41,10 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label="Toggle dark theme"
       title="Toggle theme"
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-fg-muted transition hover:bg-surface-2 hover:text-fg active:scale-95"
+      className="flex h-7 w-7 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
     >
-      <Moon aria-hidden className="h-[18px] w-[18px] dark:hidden" />
-      <Sun aria-hidden className="hidden h-[18px] w-[18px] dark:block" />
+      <Moon aria-hidden className="h-[15px] w-[15px] dark:hidden" />
+      <Sun aria-hidden className="hidden h-[15px] w-[15px] dark:block" />
     </button>
   );
 }

@@ -1,8 +1,7 @@
-import { SearchX } from 'lucide-react';
 import type { Approval } from '@/lib/contracts';
 import { ApprovalRow } from './ApprovalRow';
 
-const COLUMNS = ['Folder / Content name', 'Type', 'Submitted by', 'Date', 'Status', ''];
+const COLUMNS = ['Name', 'Type', 'Submitted by', 'Date', 'Status'];
 
 interface Props {
   approvals: Approval[];
@@ -14,12 +13,12 @@ interface Props {
 export function ApprovalsTable({ approvals, loading, selectedId, onSelect }: Props) {
   return (
     <div className="overflow-x-auto">
-      <table aria-label="Pending approval requests" aria-busy={loading} className="w-full min-w-[680px] text-left">
+      <table aria-label="Pending approval requests" aria-busy={loading} className="w-full min-w-[620px] text-left text-[13px]">
         <thead>
-          <tr className="border-b border-line bg-surface-2/60 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle">
+          <tr className="h-8 border-y border-line bg-surface-2/50 text-[11px] font-medium text-fg-subtle">
             {COLUMNS.map((c, i) => (
-              <th key={i} scope="col" className={`py-2.5 font-semibold ${i === 0 ? 'pl-5 pr-3' : i === 5 ? 'pr-5' : 'px-3'}`}>
-                {c || <span className="sr-only">Open</span>}
+              <th key={c} scope="col" className={`font-medium ${i === 0 ? 'pl-4 pr-3' : i === COLUMNS.length - 1 ? 'px-3 pr-4' : 'px-3'}`}>
+                {c}
               </th>
             ))}
           </tr>
@@ -27,19 +26,18 @@ export function ApprovalsTable({ approvals, loading, selectedId, onSelect }: Pro
         <tbody>
           {loading && approvals.length === 0
             ? Array.from({ length: 4 }, (_, i) => (
-                <tr key={i} className="border-b border-line last:border-0">
-                  <td className="py-4 pl-5 pr-3">
-                    <div className="flex items-center gap-3">
-                      <div className="skeleton h-9 w-9 rounded-xl" />
-                      <div className="skeleton h-3.5 w-48 rounded" />
+                <tr key={i} className="h-11 border-b border-line last:border-0">
+                  <td className="pl-4 pr-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="skeleton h-6 w-6 rounded-md" />
+                      <div className="skeleton h-3 w-44 rounded" />
                     </div>
                   </td>
-                  {[16, 24, 12, 24].map((w, j) => (
-                    <td key={j} className="px-3 py-4">
-                      <div className="skeleton h-3.5 rounded" style={{ width: `${w * 4}px` }} />
+                  {[48, 96, 40, 88].map((w, j) => (
+                    <td key={j} className="px-3">
+                      <div className="skeleton h-3 rounded" style={{ width: w }} />
                     </td>
                   ))}
-                  <td />
                 </tr>
               ))
             : approvals.map((a, i) => (
@@ -47,8 +45,7 @@ export function ApprovalsTable({ approvals, loading, selectedId, onSelect }: Pro
               ))}
           {!loading && approvals.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-5 py-12 text-center text-sm text-fg-muted">
-                <SearchX aria-hidden className="mx-auto mb-2 h-6 w-6 text-fg-subtle" />
+              <td colSpan={5} className="px-4 py-10 text-center text-fg-muted">
                 No approvals match your search.
               </td>
             </tr>
