@@ -1,27 +1,19 @@
-const SESSION_KEY = 'crystal-ball.sessionId';
-
 const randomId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 
-let memorySessionId: string | undefined;
+let sessionId: string | undefined;
 
 /**
- * Opaque per-tab id that groups conversation history and keys rate limits on the backend.
- * It is not an auth token. Storage can be unavailable (private mode), so fall back to memory.
+ * Opaque id that groups conversation history and keys rate limits on the backend. It is not an
+ * auth token. It lives only for the page's lifetime: the assistant's conversations are kept in
+ * memory and start empty on every load, so the server-side history must start fresh too —
+ * otherwise the model sees (and refers to) turns the operator can no longer see.
  */
 export function getSessionId(): string {
-  try {
-    const existing = sessionStorage.getItem(SESSION_KEY);
-    if (existing) return existing;
-    const id = randomId();
-    sessionStorage.setItem(SESSION_KEY, id);
-    return id;
-  } catch {
-    memorySessionId ??= randomId();
-    return memorySessionId;
-  }
+  sessionId ??= randomId();
+  return sessionId;
 }
 
 /** The operator's browser language as a BCP-47 tag, e.g. "en-US". */

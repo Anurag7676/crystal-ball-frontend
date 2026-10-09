@@ -13,13 +13,23 @@ interface Props {
   onReveal?: () => void;
 }
 
-/** Verified citations when the model cited any; otherwise the policy context it was given. */
+/**
+ * Citations to show for a finished answer: the backend-validated `citedSources`, de-duplicated and
+ * restricted to the chunks this answer was grounded on (`meta.sources`) as a second check.
+ */
+export function displayedCitations(message: ChatMessage): string[] {
+  if (message.status !== 'done' || !message.citedSources) return [];
+  const grounded = message.sources;
+  return [...new Set(message.citedSources)].filter((id) => !grounded || grounded.includes(id));
+}
+
+/** Footer listing the sections the answer actually cited. Renders nothing when there are none. */
 function SourcesLine({ message }: { message: ChatMessage }) {
-  const ids = message.citedSources?.length ? message.citedSources : message.sources;
-  if (!ids?.length) return null;
+  const ids = displayedCitations(message);
+  if (ids.length === 0) return null;
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
-      {message.citedSources?.length ? 'Sources: ' : 'Policy context: '}
+      Sources:{' '}
       {ids.map((id, i) => (
         <span key={id} className="rounded border border-line px-1 font-mono text-[10px] text-fg-muted">
           {id}
@@ -57,11 +67,13 @@ export function StreamingMessage({ message, onRetry, onReveal }: Props) {
         {message.status === 'error' && message.error && (
           <ErrorNotice message={message.error.message} onRetry={message.error.retryable ? onRetry : undefined} />
         )}
-        {(message.status === 'cancelled' || message.source) && (
+        {(message.status === 'cancelled' ||
+          message.source === 'fallback' ||
+          displayedCitations(message).length > 0) && (
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-fg-subtle">
             {message.status === 'cancelled' && <span>Stopped</span>}
             <SourceBadge source={message.source} reason={message.fallbackReason} />
-            {message.status === 'done' && message.source === 'ai' && <SourcesLine message={message} />}
+            <SourcesLine message={message} />
           </div>
         )}
       </div>
