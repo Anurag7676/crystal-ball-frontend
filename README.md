@@ -51,7 +51,7 @@ store/assistantStore.ts    Zustand: panel state, session, greeting, summary, per
 lib/sse.ts                 incremental SSE parser for fetch streams
 lib/api.ts                 fetchApprovals, streamAiAction, typed ApiError
 lib/contracts.ts           Zod copy of the backend contract
-lib/session.ts             per-tab session id (sessionStorage, memory fallback) and browser language
+lib/session.ts             per-page-load session id (conversations start fresh on reload) and browser language
 contract/api-contract.json JSON Schema exported by the backend (drift check)
 ```
 
