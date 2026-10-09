@@ -141,6 +141,64 @@ describe('AssistantPanel', () => {
     expect(screen.getByRole('log')).toHaveTextContent(/stopped/i);
   });
 
+  it('shows a retryable error for a failed chat reply and resends the same question on retry', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByRole('button', { name: 'Talk to me' }));
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Which first?');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    await stream.finish('chat', meta('chat'), {
+      event: 'error',
+      data: { code: 'ai_unavailable', message: 'The AI assistant took too long to respond.', retryable: true },
+    });
+
+    const alert = within(screen.getByRole('log')).getByRole('alert');
+    expect(alert).toHaveTextContent('The AI assistant took too long to respond.');
+
+    await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+
+    const chatCalls = stream.calls.filter((c) => c.action === 'chat');
+    expect(chatCalls).toHaveLength(2);
+    expect(chatCalls[1]!.body).toMatchObject({ message: 'Which first?' });
+    expect(within(screen.getByRole('log')).getAllByText('Which first?')).toHaveLength(1);
+  });
+
+  it('surfaces rate limiting from the API as a readable error', async () => {
+    renderPanel();
+
+    await stream.fail('greeting', new ApiError('rate_limited', 'Too many AI requests. Please wait a moment and try again.', 429));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Too many AI requests.');
+  });
+
+  it('Help me lists the policy sources the answer was grounded in', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByRole('button', { name: 'Help me' }));
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'What about safety items?');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    await stream.finish(
+      'help',
+      { event: 'meta', data: { action: 'help', requestId: 'r', sources: ['policy-3', 'policy-2'] } },
+      delta('Review them first [policy-3].'),
+      { event: 'done', data: { source: 'ai', citedSources: ['policy-3'] } },
+    );
+
+    expect(screen.getByRole('log')).toHaveTextContent('Sources: policy-3, policy-2');
+  });
+
+  it('Teach me starts the lesson automatically', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Teach me' }));
+
+    expect(stream.last('teach').body).toMatchObject({ message: 'Teach me how to review an approval.' });
+    expect(stream.calls.filter((c) => c.action === 'teach')).toHaveLength(1);
+  });
+
   it('Present me Summary renders the validated structured summary', async () => {
     const user = userEvent.setup();
     renderPanel();
