@@ -172,7 +172,7 @@ describe('AssistantPanel', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Too many AI requests.');
   });
 
-  it('Help me lists the policy sources the answer was grounded in', async () => {
+  it('Help me shows only the verified citations the answer used', async () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByRole('button', { name: 'Help me' }));
@@ -186,7 +186,8 @@ describe('AssistantPanel', () => {
       { event: 'done', data: { source: 'ai', citedSources: ['policy-3'] } },
     );
 
-    expect(screen.getByRole('log')).toHaveTextContent('Sources: policy-3, policy-2');
+    expect(screen.getByRole('log')).toHaveTextContent('Sources: policy-3');
+    expect(screen.getByRole('log')).not.toHaveTextContent('policy-2');
   });
 
   it('Teach me starts the lesson automatically', async () => {

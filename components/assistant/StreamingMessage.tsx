@@ -8,6 +8,13 @@ interface Props {
   onRetry?: () => void;
 }
 
+/** Verified citations when the model cited any; otherwise the policy context it was given. */
+function SourcesLine({ message }: { message: ChatMessage }) {
+  if (message.citedSources?.length) return <span>Sources: {message.citedSources.join(', ')}</span>;
+  if (message.sources?.length) return <span>Policy context: {message.sources.join(', ')}</span>;
+  return null;
+}
+
 /** One assistant reply: thinking → tokens with a caret → final text, fallback badge, or error. */
 export function StreamingMessage({ message, onRetry }: Props) {
   const streaming = message.status === 'streaming';
@@ -27,9 +34,7 @@ export function StreamingMessage({ message, onRetry }: Props) {
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
         {message.status === 'cancelled' && <span>Stopped</span>}
         <SourceBadge source={message.source} reason={message.fallbackReason} />
-        {message.status === 'done' && message.sources && message.sources.length > 0 && (
-          <span>Sources: {message.sources.join(', ')}</span>
-        )}
+        {message.status === 'done' && message.source === 'ai' && <SourcesLine message={message} />}
       </div>
     </div>
   );

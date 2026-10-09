@@ -23,7 +23,10 @@ export interface ChatMessage extends AnswerSource {
   role: 'user' | 'assistant';
   content: string;
   status: 'streaming' | 'done' | 'error' | 'cancelled';
+  /** Policy chunks retrieved for this answer (from `meta`). */
   sources?: string[];
+  /** Retrieved chunks the model actually cited, verified server-side (from `done`). */
+  citedSources?: string[];
   error?: UiError;
 }
 
