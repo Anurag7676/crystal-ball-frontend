@@ -52,8 +52,8 @@ export function ApprovalsDashboard() {
   const selected = approvals.find((a) => a.id === (selectedId ?? approvals[0]?.id));
 
   return (
-    <div className="flex min-h-screen bg-bg text-fg">
-      <nav aria-label="Primary" className="sticky top-0 hidden h-screen w-52 shrink-0 flex-col border-r border-line bg-surface md:flex">
+    <div className="flex h-screen overflow-hidden bg-bg text-fg">
+      <nav aria-label="Primary" className="hidden h-full w-52 shrink-0 flex-col border-r border-line bg-surface md:flex">
         <div className="flex h-12 items-center gap-2 border-b border-line px-3.5">
           <BrandMark className="h-6 w-6" />
           <div className="leading-none">
@@ -92,7 +92,7 @@ export function ApprovalsDashboard() {
         </div>
       </nav>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-line bg-bg/80 px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-1.5 text-[13px]">
             <BrandMark className="h-5 w-5 md:hidden" />
@@ -112,7 +112,7 @@ export function ApprovalsDashboard() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
+        <main className="flex w-full flex-1 flex-col px-4 py-5 sm:px-6">
           <div className="flex animate-rise flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-[20px] font-semibold tracking-tight">Approvals &amp; Review</h1>
@@ -131,8 +131,8 @@ export function ApprovalsDashboard() {
             </label>
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <section className="animate-rise overflow-hidden rounded-lg border border-line bg-surface shadow-card [animation-delay:40ms]">
+          <div className="mt-5 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
+            <section className="flex min-h-[320px] animate-rise flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-card [animation-delay:40ms]">
               <div className="flex h-11 items-center gap-2 px-4">
                 <h2 className="text-[13px] font-medium">Pending approval requests</h2>
                 <span className="rounded bg-surface-2 px-1.5 text-[11px] font-medium tabular-nums text-fg-muted">
@@ -160,7 +160,7 @@ export function ApprovalsDashboard() {
             </aside>
           </div>
 
-          <p className="mt-6 flex items-center gap-1.5 text-[11px] text-fg-subtle">
+          <p className="mt-4 flex items-center gap-1.5 text-[11px] text-fg-subtle">
             <span
               aria-hidden
               className={`h-1.5 w-1.5 rounded-full ${status === 'error' ? 'bg-danger' : status === 'loading' ? 'bg-warm' : 'bg-success'}`}
