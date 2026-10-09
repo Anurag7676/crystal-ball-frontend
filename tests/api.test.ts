@@ -86,8 +86,30 @@ describe('streamAiAction', () => {
 });
 
 describe('fetchApprovals', () => {
+  const emptyPage = {
+    approvals: [],
+    total: 0,
+    page: 1,
+    pageSize: 10,
+    pageCount: 1,
+    pendingCount: 0,
+    source: 'fixture',
+    facets: { type: [], submittedBy: [], status: [] },
+  };
+
+  it('encodes search, list filters and paging as query params, omitting empty ones', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(emptyPage)));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchApprovals({ q: ' camera ', type: ['pdf', 'image'], submittedBy: [], page: 2, pageSize: 25 });
+
+    const url = new URL(fetchMock.mock.calls[0]![0] as string);
+    expect(url.pathname).toBe('/api/approvals');
+    expect(Object.fromEntries(url.searchParams)).toEqual({ q: 'camera', type: 'pdf,image', page: '2', pageSize: '25' });
+  });
+
   it('validates the approvals payload', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ approvals: [{ id: 1 }] }))));
-    await expect(fetchApprovals()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchApprovals({})).rejects.toBeInstanceOf(ApiError);
   });
 });
