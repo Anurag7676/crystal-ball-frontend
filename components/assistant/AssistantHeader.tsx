@@ -50,7 +50,7 @@ export function AssistantHeader({ expanded, onToggleExpanded, onClose }: Props) 
       </div>
       {showInfo && (
         <p className="animate-rise border-t border-line bg-surface-2/60 px-3 py-2 text-[11.5px] leading-relaxed text-fg-muted">
-          Powered by GPT-4o. It summarises and explains the queue but cannot approve or reject items. Answers marked
+          The assistant summarises and explains the queue but cannot approve or reject items. Answers marked
           “Offline answer” are standard responses used when the AI is unavailable.
         </p>
       )}
