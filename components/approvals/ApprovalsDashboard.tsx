@@ -253,16 +253,6 @@ export function ApprovalsDashboard() {
               <ApprovalDetail approval={selected} />
             </aside>
           </div>
-
-          <p className="mt-4 flex items-center gap-1.5 text-[11px] text-fg-subtle">
-            <span
-              aria-hidden
-              className={`h-1.5 w-1.5 rounded-full ${status === 'error' ? 'bg-danger' : status === 'loading' ? 'bg-warm' : 'bg-success'}`}
-            />
-            {status === 'loading' ? 'Loading…' : status === 'error' ? 'Offline' : 'Ready'}
-            <span className="mx-1">·</span>
-            Crystal Ball take-home — not an OomniEye product
-          </p>
         </main>
       </div>
 
