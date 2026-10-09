@@ -57,6 +57,15 @@ contract/api-contract.json JSON Schema exported by the backend (drift check)
 
 The spec's planned `hooks/useAIStream.ts` was folded into the Zustand store. The streaming state has to outlive the component that started it, because switching views must not cancel or lose a reply. A per-component hook would therefore have needed a second, parallel source of state.
 
+## Approvals table: server-driven search, filters and pagination
+
+The table never filters or pages in the browser. `useApprovals(query)` calls `GET /api/approvals` with:
+- `q` (search, debounced by 250 ms)
+- `type`, `submittedBy` and `status`, as comma-separated lists
+- `page` and `pageSize` (10/25/50)
+
+Each new query aborts the previous request, and the current page stays visible (dimmed) while the next one loads. The filter menus build their options and counts from the server's `facets`. The range, page count and clamped page all come from the response. Changing the search, a filter or the page size resets to page 1.
+
 ## API integration and streaming
 
 - The backend's AI endpoints are `POST` + SSE. `EventSource` can only send GET, so `streamAiAction` uses `fetch` with a `ReadableStream` reader.

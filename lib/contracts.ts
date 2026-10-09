@@ -20,13 +20,34 @@ export const ApprovalSchema = z.object({
   submittedDateLabel: z.string().min(1),
 });
 
+const FacetSchema = z.array(z.object({ value: z.string(), count: z.number().int().nonnegative() }));
+
 export const ApprovalsResponseSchema = z.object({
   approvals: z.array(ApprovalSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  pageCount: z.number().int().min(1),
+  pendingCount: z.number().int().nonnegative(),
+  facets: z.object({ type: FacetSchema, submittedBy: FacetSchema, status: FacetSchema }),
   source: z.enum(['mongodb', 'fixture']),
 });
 
 export type Approval = z.infer<typeof ApprovalSchema>;
 export type ApprovalsResponse = z.infer<typeof ApprovalsResponseSchema>;
+export type Facet = ApprovalsResponse['facets']['type'];
+
+/** GET /api/approvals query (validated server-side; see backend ApprovalQuerySchema). */
+export interface ApprovalQuery {
+  q?: string;
+  type?: Approval['type'][];
+  submittedBy?: string[];
+  status?: Approval['status'][];
+  page?: number;
+  pageSize?: number;
+}
+
+export const PAGE_SIZES = [10, 25, 50] as const;
 
 // ---------- Structured summary ----------
 

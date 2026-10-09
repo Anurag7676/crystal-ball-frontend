@@ -1,6 +1,7 @@
 import {
   type AiAction,
   type AiStreamEvent,
+  type ApprovalQuery,
   type ApprovalsResponse,
   ApprovalsResponseSchema,
   ErrorResponseSchema,
@@ -56,8 +57,21 @@ async function send(path: string, init: RequestInit): Promise<Response> {
   return res;
 }
 
-export async function fetchApprovals(signal?: AbortSignal): Promise<ApprovalsResponse> {
-  const res = await send('/api/approvals', { signal });
+/** Serialises the query; list filters are comma-joined and empty values omitted. */
+export function approvalsQueryString({ q, type, submittedBy, status, page, pageSize }: ApprovalQuery): string {
+  const params = new URLSearchParams();
+  if (q?.trim()) params.set('q', q.trim());
+  if (type?.length) params.set('type', type.join(','));
+  if (submittedBy?.length) params.set('submittedBy', submittedBy.join(','));
+  if (status?.length) params.set('status', status.join(','));
+  if (page) params.set('page', String(page));
+  if (pageSize) params.set('pageSize', String(pageSize));
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export async function fetchApprovals(query: ApprovalQuery, signal?: AbortSignal): Promise<ApprovalsResponse> {
+  const res = await send(`/api/approvals${approvalsQueryString(query)}`, { signal });
   const parsed = ApprovalsResponseSchema.safeParse(await res.json().catch(() => null));
   if (!parsed.success) throw new ApiError('invalid_response', 'The server returned unexpected approval data.');
   return parsed.data;

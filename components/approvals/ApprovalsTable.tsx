@@ -5,15 +5,23 @@ const COLUMNS = ['Name', 'Type', 'Submitted by', 'Date', 'Status'];
 
 interface Props {
   approvals: Approval[];
+  /** First load: nothing to show yet. */
   loading: boolean;
+  /** A newer page is loading while the current one stays visible. */
+  refreshing?: boolean;
   selectedId?: string;
   onSelect: (id: string) => void;
+  onClearFilters?: () => void;
 }
 
-export function ApprovalsTable({ approvals, loading, selectedId, onSelect }: Props) {
+export function ApprovalsTable({ approvals, loading, refreshing, selectedId, onSelect, onClearFilters }: Props) {
   return (
-    <div className="overflow-x-auto">
-      <table aria-label="Pending approval requests" aria-busy={loading} className="w-full min-w-[620px] text-left text-[13px]">
+    <div className={`min-h-0 flex-1 overflow-auto transition-opacity ${refreshing ? 'opacity-60' : ''}`}>
+      <table
+        aria-label="Pending approval requests"
+        aria-busy={loading || refreshing}
+        className="w-full min-w-[620px] text-left text-[13px]"
+      >
         <thead>
           <tr className="h-8 border-y border-line bg-surface-2/50 text-[11px] font-medium text-fg-subtle">
             {COLUMNS.map((c, i) => (
@@ -45,8 +53,17 @@ export function ApprovalsTable({ approvals, loading, selectedId, onSelect }: Pro
               ))}
           {!loading && approvals.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-fg-muted">
-                No approvals match your search.
+              <td colSpan={5} className="px-4 py-12 text-center">
+                <p className="text-fg">No approvals match these filters.</p>
+                {onClearFilters && (
+                  <button
+                    type="button"
+                    onClick={onClearFilters}
+                    className="mt-2 text-[12px] text-fg-muted underline-offset-4 hover:text-fg hover:underline"
+                  >
+                    Clear search and filters
+                  </button>
+                )}
               </td>
             </tr>
           )}

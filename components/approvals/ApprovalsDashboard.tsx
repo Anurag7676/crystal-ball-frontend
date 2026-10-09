@@ -12,6 +12,7 @@ import {
   Ticket,
   UserCheck,
   Users,
+  X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { AssistantPanel } from '@/components/assistant/AssistantPanel';
@@ -19,8 +20,13 @@ import { BrandMark } from '@/components/ui/BrandMark';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useApprovals } from '@/hooks/useApprovals';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { type Approval, type ApprovalQuery, PAGE_SIZES } from '@/lib/contracts';
 import { ApprovalDetail } from './ApprovalDetail';
 import { ApprovalsTable } from './ApprovalsTable';
+import { STATUS_LABEL, TYPE_META } from './approvalMeta';
+import { FilterMenu } from './FilterMenu';
+import { Pagination } from './Pagination';
 
 const NAV = [
   { Icon: LayoutGrid, label: 'Dashboard' },
@@ -35,21 +41,52 @@ const NAV = [
 const iconButton =
   'flex h-7 w-7 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg';
 
+interface Filters {
+  type: Approval['type'][];
+  submittedBy: string[];
+  status: Approval['status'][];
+}
+
+const NO_FILTERS: Filters = { type: [], submittedBy: [], status: [] };
+const nonEmpty = <T,>(list: T[]) => (list.length ? list : undefined);
+
 export function ApprovalsDashboard() {
-  const { status, approvals, reload, ...rest } = useApprovals();
-  const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
   const [selectedId, setSelectedId] = useState<string>();
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return approvals;
-    return approvals.filter((a) =>
-      [a.title, a.type, a.submittedBy, a.submittedDateLabel].some((field) => field.toLowerCase().includes(q)),
-    );
-  }, [approvals, query]);
+  // Search, filtering and paging all happen on the server; this is just the request.
+  const query = useMemo<ApprovalQuery>(
+    () => ({
+      q: debouncedSearch || undefined,
+      type: nonEmpty(filters.type),
+      submittedBy: nonEmpty(filters.submittedBy),
+      status: nonEmpty(filters.status),
+      page,
+      pageSize,
+    }),
+    [debouncedSearch, filters, page, pageSize],
+  );
 
-  const pendingCount = approvals.filter((a) => a.status === 'pending_review').length;
-  const selected = approvals.find((a) => a.id === (selectedId ?? approvals[0]?.id));
+  const result = useApprovals(query);
+  const { status, data, reload } = result;
+  const approvals = data?.approvals ?? [];
+  const pendingCount = data?.pendingCount ?? 0;
+  const selected = approvals.find((a) => a.id === selectedId) ?? approvals[0];
+  const hasCriteria = Boolean(search.trim()) || Object.values(filters).some((list) => list.length > 0);
+
+  const updateFilter = <K extends keyof Filters>(key: K, values: Filters[K]) => {
+    setFilters((f) => ({ ...f, [key]: values }));
+    setPage(1);
+  };
+  const clearAll = () => {
+    setSearch('');
+    setFilters(NO_FILTERS);
+    setPage(1);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-fg">
@@ -123,8 +160,11 @@ export function ApprovalsDashboard() {
               <span className="sr-only">Search approvals</span>
               <input
                 type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search approvals…"
                 className="w-full bg-transparent text-[13px] outline-none placeholder:text-fg-subtle"
               />
@@ -133,22 +173,78 @@ export function ApprovalsDashboard() {
 
           <div className="mt-5 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
             <section className="flex min-h-[320px] animate-rise flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-card [animation-delay:40ms]">
-              <div className="flex h-11 items-center gap-2 px-4">
+              <div className="flex h-11 shrink-0 items-center gap-2 px-4">
                 <h2 className="text-[13px] font-medium">Pending approval requests</h2>
-                <span className="rounded bg-surface-2 px-1.5 text-[11px] font-medium tabular-nums text-fg-muted">
-                  {pendingCount} items
-                </span>
+                {data && (
+                  <span className="rounded bg-surface-2 px-1.5 text-[11px] font-medium tabular-nums text-fg-muted">
+                    {data.total} items
+                  </span>
+                )}
               </div>
 
-              {status === 'error' && 'error' in rest ? (
-                <ErrorNotice className="mx-4 mb-4" message={rest.error} onRetry={reload} />
-              ) : (
-                <ApprovalsTable
-                  approvals={filtered}
-                  loading={status === 'loading'}
-                  selectedId={selected?.id}
-                  onSelect={setSelectedId}
+              <div className="flex shrink-0 flex-wrap items-center gap-1.5 px-4 pb-3">
+                <FilterMenu
+                  label="Type"
+                  options={data?.facets.type ?? []}
+                  selected={filters.type}
+                  onChange={(v) => updateFilter('type', v as Approval['type'][])}
+                  formatValue={(v) => TYPE_META[v as Approval['type']]?.label ?? v}
                 />
+                <FilterMenu
+                  label="Submitted by"
+                  options={data?.facets.submittedBy ?? []}
+                  selected={filters.submittedBy}
+                  onChange={(v) => updateFilter('submittedBy', v)}
+                />
+                <FilterMenu
+                  label="Status"
+                  options={data?.facets.status ?? []}
+                  selected={filters.status}
+                  onChange={(v) => updateFilter('status', v as Approval['status'][])}
+                  formatValue={(v) => STATUS_LABEL[v as Approval['status']] ?? v}
+                />
+                {hasCriteria && (
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+                  >
+                    <X aria-hidden className="h-3 w-3" />
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {status === 'error' && !data ? (
+                <ErrorNotice className="mx-4 mb-4" message={result.error} onRetry={reload} />
+              ) : (
+                <>
+                  {status === 'error' && <ErrorNotice className="mx-4 mb-3" message={result.error} onRetry={reload} />}
+                  <ApprovalsTable
+                    approvals={approvals}
+                    loading={!data}
+                    refreshing={status === 'loading' && Boolean(data)}
+                    selectedId={selected?.id}
+                    onSelect={setSelectedId}
+                    onClearFilters={hasCriteria ? clearAll : undefined}
+                  />
+                  {data && (
+                    <Pagination
+                      page={data.page}
+                      pageCount={data.pageCount}
+                      pageSize={data.pageSize}
+                      selectedPageSize={pageSize}
+                      total={data.total}
+                      shown={approvals.length}
+                      disabled={status === 'loading'}
+                      onPageChange={setPage}
+                      onPageSizeChange={(size) => {
+                        setPageSize(size);
+                        setPage(1);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </section>
 
