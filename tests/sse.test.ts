@@ -40,6 +40,11 @@ describe('SSE parser', () => {
     expect(events).toEqual([{ event: 'delta', data: 'line1\nline2' }]);
   });
 
+  it('does not see a false event boundary when CRLF is split across chunks', () => {
+    const events = parseChunks(['event: delta\r', '\ndata: a\r\n', '\r\n']);
+    expect(events).toEqual([{ event: 'delta', data: 'a' }]);
+  });
+
   it('defaults the event name to "message"', () => {
     expect(parseChunks(['data: x\n\n'])).toEqual([{ event: 'message', data: 'x' }]);
   });
