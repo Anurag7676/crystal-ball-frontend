@@ -50,7 +50,7 @@ export function ApprovalDetail({ approval }: { approval?: Approval }) {
         </button>
         <button
           type="button"
-          onClick={() => askAbout('teach')}
+          onClick={() => askAbout('teach', `How do I review "${approval.title}"?`)}
           className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-line bg-surface px-3 text-[12.5px] font-medium text-fg transition-colors hover:bg-surface-2"
         >
           <GraduationCap aria-hidden className="h-3.5 w-3.5 text-fg-muted" />

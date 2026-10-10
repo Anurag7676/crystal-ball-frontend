@@ -333,7 +333,10 @@ describe('AssistantPanel', () => {
       stream.emit('chat', meta('chat'), delta('Partial'));
 
       await user.click(screen.getByRole('button', { name: 'Stop' }));
-      act(() => stopped.emit(delta(' — late text'), doneAi));
+      act(() => {
+        stopped.emit(delta(' — late text'));
+        stopped.emit(doneAi);
+      });
 
       await waitFor(() => expect(screen.getByRole('log')).toHaveTextContent(/stopped/i));
       expect(screen.getByRole('log')).not.toHaveTextContent('late text');

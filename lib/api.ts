@@ -110,7 +110,9 @@ export async function streamAiAction(
       json = undefined;
     }
     const parsed = schema.safeParse(json);
-    if (!parsed.success) {
+    // A stream answering for another action is never trusted (guards request/response mix-ups).
+    const wrongAction = event === 'meta' && (parsed.data as { action?: string }).action !== action;
+    if (!parsed.success || wrongAction) {
       contractError = new ApiError('invalid_response', 'The assistant sent a response we could not read.');
       return;
     }

@@ -103,6 +103,22 @@ const toUiError = (err: unknown): UiError =>
 let nextId = 0;
 const newId = () => `m${++nextId}`;
 
+/**
+ * Drops events from a request that has been stopped or superseded, so a late chunk from an old
+ * stream can never write into newer state.
+ */
+const onlyWhileActive =
+  (signal: AbortSignal, handle: (e: AiStreamEvent) => void) =>
+  (e: AiStreamEvent) => {
+    if (!signal.aborted) handle(e);
+  };
+
+/** True while `signal` belongs to the most recent request for `action` (or none replaced it). */
+const isLatestRequest = (action: AiAction, signal: AbortSignal) => {
+  const current = controllers.get(action);
+  return !current || current.signal === signal;
+};
+
 export const useAssistantStore = create<AssistantState>()((set, get) => {
   const requestBody = () => ({ sessionId: getSessionId(), language: getLanguage() });
 
@@ -115,12 +131,12 @@ export const useAssistantStore = create<AssistantState>()((set, get) => {
       await streamAiAction(
         'greeting',
         requestBody(),
-        (e) => {
+        onlyWhileActive(signal, (e) => {
           if (e.event === 'delta') patch({ status: 'streaming', text: get().greeting.text + e.data.text });
           else if (e.event === 'result' && e.data.kind === 'text') patch({ text: e.data.text });
           else if (e.event === 'error') patch({ status: 'error', error: { message: e.data.message, retryable: e.data.retryable } });
           else if (e.event === 'done') patch({ status: 'done', ...e.data });
-        },
+        }),
         signal,
       );
     } catch (err) {
@@ -158,11 +174,11 @@ export const useAssistantStore = create<AssistantState>()((set, get) => {
         await streamAiAction(
           'summary',
           requestBody(),
-          (e: AiStreamEvent) => {
+          onlyWhileActive(signal, (e) => {
             if (e.event === 'result' && e.data.kind === 'summary') patch({ data: e.data.summary });
             else if (e.event === 'error') patch({ status: 'error', error: { message: e.data.message, retryable: e.data.retryable } });
             else if (e.event === 'done') patch({ status: get().summary.data ? 'done' : 'error', ...e.data });
-          },
+          }),
           signal,
         );
       } catch (err) {
@@ -191,7 +207,7 @@ export const useAssistantStore = create<AssistantState>()((set, get) => {
         await streamAiAction(
           action,
           { ...requestBody(), message: text },
-          (e) => {
+          onlyWhileActive(signal, (e) => {
             switch (e.event) {
               case 'meta':
                 if (e.data.sources) updateMessage(action, replyId, () => ({ sources: e.data.sources }));
@@ -218,13 +234,14 @@ export const useAssistantStore = create<AssistantState>()((set, get) => {
                 updateThread(action, () => ({ status: 'done' }));
                 break;
             }
-          },
+          }),
           signal,
         );
       } catch (err) {
         if (isAbort(err)) {
           updateMessage(action, replyId, () => ({ status: 'cancelled' }));
-          updateThread(action, () => ({ status: 'idle' }));
+          // Only release the thread if no newer request for this action has started meanwhile.
+          if (isLatestRequest(action, signal)) updateThread(action, () => ({ status: 'idle' }));
           return;
         }
         updateMessage(action, replyId, () => ({ status: 'error', error: toUiError(err) }));
