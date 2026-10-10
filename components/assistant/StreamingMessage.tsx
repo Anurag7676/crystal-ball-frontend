@@ -5,6 +5,7 @@ import { SourceBadge } from '@/components/ui/SourceBadge';
 import { Thinking } from '@/components/ui/Thinking';
 import { useSmoothText } from '@/hooks/useSmoothText';
 import type { ChatMessage } from '@/store/assistantStore';
+import { FormattedText } from './FormattedText';
 
 interface Props {
   message: ChatMessage;
@@ -58,7 +59,7 @@ export function StreamingMessage({ message, onRetry, onReveal }: Props) {
         {streaming && !message.content && <Thinking />}
         {message.content && message.status !== 'error' && (
           <div className="whitespace-pre-wrap text-[13px] leading-relaxed text-fg">
-            {visible}
+            <FormattedText text={visible} />
             {revealing && (
               <span aria-hidden className="ml-0.5 inline-block h-3.5 w-[2px] animate-caret bg-fg align-text-bottom" />
             )}
