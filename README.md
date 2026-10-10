@@ -34,7 +34,7 @@ Production: `npm run build && npm start`.
   - **floating button** to close and reopen the widget
 - **Views:**
   - **Greeting:** plays when the panel opens; each replay makes a fresh backend request.
-  - **Summary:** renders the validated structured summary (count, overview, suggested order, recommendations, and the "not an official urgency" note).
+  - **Summary:** renders the validated structured summary (count, overview, suggested order, recommendations, and the "not an official urgency" note). It is the one action that doesn't stream tokens: a loading state shows until the complete summary has passed Zod and data checks (see "Streaming exception" in the backend README). No typing effect is simulated.
   - **Talk / Help / Teach:** multi-turn conversations with starter prompts, a token-by-token caret, a **Stop** button, and per-message **Try again**. *Help* shows the verified policy citations. *Teach* starts the lesson automatically.
 - **Labelled fallbacks:** any answer the backend marks `source: "fallback"` gets an **Offline answer** badge. Its tooltip gives the reason, so a fallback is never presented as AI output.
 

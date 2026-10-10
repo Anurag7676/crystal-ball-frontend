@@ -385,4 +385,60 @@ describe('AssistantPanel', () => {
     expect(summary).toHaveTextContent('Verify sensor models.');
     expect(summary).toHaveTextContent('Suggested order only.');
   });
+
+  describe('Present me Summary — validation-first rendering', () => {
+    const validSummary = {
+      pendingCount: 4,
+      overview: 'Four items await review.',
+      priorityItems: [
+        { approvalId: 'apr-003', title: 'Safety Equipment & Sensor Specs', reason: 'Safety-related content first.' },
+      ],
+      recommendations: [],
+      orderingNote: 'Suggested order only.',
+    };
+
+    it('shows only the loading state until the complete validated result arrives', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await user.click(screen.getByRole('button', { name: 'Present me Summary' }));
+
+      stream.emit('summary', meta('summary'));
+
+      expect(screen.getByText(/thinking… reviewing the queue/i)).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Queue summary' })).not.toBeInTheDocument();
+    });
+
+    it('labels a fallback summary as an offline answer', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await user.click(screen.getByRole('button', { name: 'Present me Summary' }));
+
+      await stream.finish(
+        'summary',
+        meta('summary'),
+        { event: 'result', data: { kind: 'summary', summary: validSummary } },
+        { event: 'done', data: { source: 'fallback', fallbackReason: 'timeout' } },
+      );
+
+      const summary = screen.getByRole('region', { name: 'Queue summary' });
+      expect(within(summary).getByText('Offline answer')).toBeInTheDocument();
+      expect(summary).toHaveTextContent('Safety Equipment & Sensor Specs');
+      expect(summary).not.toHaveTextContent('Recommendations'); // empty list → section hidden
+    });
+
+    it('shows a retryable error (and no summary) when the request fails, and retries', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await user.click(screen.getByRole('button', { name: 'Present me Summary' }));
+
+      await stream.fail('summary', new ApiError('invalid_response', 'The assistant sent a response we could not read.'));
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('could not read');
+      expect(screen.queryByRole('region', { name: 'Queue summary' })).not.toBeInTheDocument();
+
+      await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+      expect(stream.calls.filter((c) => c.action === 'summary')).toHaveLength(2);
+    });
+  });
 });

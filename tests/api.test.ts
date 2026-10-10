@@ -60,6 +60,22 @@ describe('streamAiAction', () => {
     await expect(run(response)).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
+  it('never passes on a summary result that fails the summary schema', async () => {
+    const malformed = { pendingCount: 4, overview: 'x', priorityItems: [{ approvalId: 'apr-003' }] }; // no title/reason/orderingNote
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        sseResponse([sse('meta', { action: 'summary', requestId: 'r1' }), sse('result', { kind: 'summary', summary: malformed })]),
+      ),
+    );
+    const events: AiStreamEvent[] = [];
+
+    await expect(streamAiAction('summary', { sessionId: 'session-1234' }, (e) => events.push(e))).rejects.toMatchObject({
+      code: 'invalid_response',
+    });
+    expect(events.map((e) => e.event)).toEqual(['meta']);
+  });
+
   it('rejects a stream that answers for a different action than the one requested', async () => {
     const response = sseResponse([sse('meta', { action: 'help', requestId: 'r1' }), sse('done', { source: 'ai' })]);
 
