@@ -199,6 +199,25 @@ describe('AssistantPanel', () => {
       stream.emit('help', { event: 'meta', data: { action: 'help', requestId: 'r', sources } });
     }
 
+    it('renders a markdown-styled answer readably: no literal ** or #, citations and footer intact', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await askHelp(user, ['policy-3', 'policy-2']);
+
+      await stream.finish(
+        'help',
+        delta('**Priority and safety checks**\n- Review safety items first [policy-3].\n'),
+        delta('## Standard review steps [policy-2]\n1. Open the item.\n2. Check it is complete.'),
+        { event: 'done', data: { source: 'ai', citedSources: ['policy-3', 'policy-2'] } },
+      );
+
+      const log = screen.getByRole('log');
+      expect(log.textContent).not.toMatch(/\*\*|##/);
+      expect(within(log).getByText('Priority and safety checks').tagName).toBe('STRONG');
+      expect(log).toHaveTextContent('1. Open the item. 2. Check it is complete.');
+      expect(within(log).getByText('Sources:', { exact: false })).toHaveTextContent(/^Sources: policy-3, policy-2$/);
+    });
+
     it('lists each validated citation once, keeping inline citations in the text', async () => {
       const user = userEvent.setup();
       renderPanel();
