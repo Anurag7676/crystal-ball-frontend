@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AssistantPanel } from '@/components/assistant/AssistantPanel';
@@ -289,6 +289,54 @@ describe('AssistantPanel', () => {
       await stream.finish('chat', meta('chat'), delta('Start with the safety specs.'), doneAi);
 
       expect(screen.getByRole('log')).not.toHaveTextContent(/Sources|policy-3/);
+    });
+  });
+
+  describe('action and request isolation', () => {
+    it('sends each request to the action shown on screen when switching Help → Teach', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await user.click(screen.getByRole('button', { name: 'Help me' }));
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'What is the review workflow?');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+      await stream.finish('help', meta('help'), delta('Steps.'), doneAi);
+
+      await user.click(screen.getByRole('button', { name: 'Back to actions' }));
+      await user.click(screen.getByRole('button', { name: 'Teach me' }));
+
+      expect(screen.getByRole('button', { name: 'Back to actions' })).toHaveTextContent('Teach me');
+      expect(stream.calls.map((c) => c.action)).toEqual(['greeting', 'help', 'teach']);
+      expect(stream.last('teach').body).toMatchObject({ message: 'Teach me how to review an approval.' });
+    });
+
+    it('ignores late events from a superseded greeting request', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      const first = stream.last('greeting');
+      stream.emit('greeting', meta('greeting'), delta('Old greet'));
+
+      await user.click(screen.getByRole('button', { name: 'Replay Greeting' }));
+      act(() => first.emit(delta('ing that arrived late')));
+      await stream.finish('greeting', meta('greeting'), delta('Fresh greeting'), doneAi);
+
+      expect(screen.getByRole('status', { name: 'Greeting' })).toHaveTextContent('Fresh greeting');
+      expect(screen.getByRole('status', { name: 'Greeting' })).not.toHaveTextContent('arrived late');
+    });
+
+    it('ignores late events from a stopped chat reply', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+      await user.click(screen.getByRole('button', { name: 'Talk to me' }));
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'hello');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+      const stopped = stream.last('chat');
+      stream.emit('chat', meta('chat'), delta('Partial'));
+
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      act(() => stopped.emit(delta(' — late text'), doneAi));
+
+      await waitFor(() => expect(screen.getByRole('log')).toHaveTextContent(/stopped/i));
+      expect(screen.getByRole('log')).not.toHaveTextContent('late text');
     });
   });
 

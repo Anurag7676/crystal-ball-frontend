@@ -60,6 +60,12 @@ describe('streamAiAction', () => {
     await expect(run(response)).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
+  it('rejects a stream that answers for a different action than the one requested', async () => {
+    const response = sseResponse([sse('meta', { action: 'help', requestId: 'r1' }), sse('done', { source: 'ai' })]);
+
+    await expect(run(response)).rejects.toMatchObject({ code: 'invalid_response' });
+  });
+
   it('treats a stream that ends without done/error as interrupted', async () => {
     const response = sseResponse([sse('meta', { action: 'greeting', requestId: 'r1' }), sse('delta', { text: 'Hal' })]);
 

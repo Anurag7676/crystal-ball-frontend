@@ -163,6 +163,21 @@ describe('ApprovalsDashboard', () => {
     );
   });
 
+  it('"How do I review this?" starts Teach with the selected item, not a generic lesson', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchApprovals).mockResolvedValue(pageOf(approvals));
+    render(<ApprovalsDashboard />);
+    await table();
+
+    await user.click(screen.getByRole('button', { name: 'Level 2 Drone Patrol Video Demo' }));
+    const detail = screen.getByRole('complementary', { name: 'Selected approval' });
+    await user.click(within(detail).getByRole('button', { name: 'How do I review this?' }));
+
+    const teachCalls = vi.mocked(streamAiAction).mock.calls.filter(([action]) => action === 'teach');
+    expect(teachCalls).toHaveLength(1);
+    expect(teachCalls[0]![1]).toMatchObject({ message: 'How do I review "Level 2 Drone Patrol Video Demo"?' });
+  });
+
   it('toggles and remembers the colour theme', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchApprovals).mockResolvedValue(pageOf(approvals));
